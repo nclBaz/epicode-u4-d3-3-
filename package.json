@@ -1,5 +1,5 @@
 {
-  "name": "epicode-u4-d2-3",
+  "name": "epicode-u4-d3-3",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nclBaz/epicode-u4-d2-3.git"
+    "url": "git+https://github.com/nclBaz/epicode-u4-d3-3-.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/nclBaz/epicode-u4-d2-3/issues"
+    "url": "https://github.com/nclBaz/epicode-u4-d3-3-/issues"
   },
-  "homepage": "https://github.com/nclBaz/epicode-u4-d2-3#readme",
+  "homepage": "https://github.com/nclBaz/epicode-u4-d3-3-#readme",
   "dependencies": {
     "express": "^4.18.2",
     "express-list-endpoints": "^6.0.0",

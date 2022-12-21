@@ -2,6 +2,7 @@
 import express from "express" // NEW IMPORT SYNTAX (do not forget to add type: "module" to package.json to use this!!)
 import listEndpoints from "express-list-endpoints"
 import usersRouter from "./api/users/index.js"
+import booksRouter from "./api/books/index.js"
 
 const server = express()
 
@@ -11,6 +12,7 @@ server.use(express.json()) // If you do not add this line here BEFORE the endpoi
 
 // ****************** ENDPOINTS *********************
 server.use("/users", usersRouter) // All users related endpoints will share the same /users prefix in their urls
+server.use("/books", booksRouter)
 
 server.listen(port, () => {
   console.table(listEndpoints(server))
