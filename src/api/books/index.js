@@ -15,65 +15,108 @@ import { fileURLToPath } from "url"
 import { dirname, join } from "path"
 import uniqid from "uniqid"
 import fs from "fs"
+import httpErrors from "http-errors"
+import { checksBooksSchema, triggerBadRequest } from "./validator.js"
+
+const { NotFound, Unauthorized, BadRequest } = httpErrors
 
 const booksRouter = express.Router()
 
 const booksJSONPath = join(dirname(fileURLToPath(import.meta.url)), "books.json")
 
+const anotherStupidMiddleware = (req, res, next) => {
+  console.log("I am a stupid middleware")
+  next()
+}
+
 const getBooks = () => JSON.parse(fs.readFileSync(booksJSONPath))
 const writeBooks = booksArray => fs.writeFileSync(booksJSONPath, JSON.stringify(booksArray))
 
-booksRouter.post("/", (req, res) => {
-  const newBook = { ...req.body, createdAt: new Date(), id: uniqid() }
+booksRouter.post("/", checksBooksSchema, triggerBadRequest, (req, res, next) => {
+  try {
+    const newBook = { ...req.body, createdAt: new Date(), id: uniqid() }
 
-  const booksArray = getBooks()
+    const booksArray = getBooks()
 
-  booksArray.push(newBook)
+    booksArray.push(newBook)
 
-  writeBooks(booksArray)
+    writeBooks(booksArray)
 
-  res.status(201).send({ id: newBook.id })
-})
-
-booksRouter.get("/", (req, res) => {
-  console.log(req.query)
-  const booksArray = getBooks()
-  if (req.query && req.query.category) {
-    const filteredBooks = booksArray.filter(book => book.category === req.query.category)
-    res.send(filteredBooks)
-  } else {
-    res.send(booksArray)
+    res.status(201).send({ id: newBook.id })
+  } catch (error) {
+    next(error) // with the next(error) I can send this error to the error handlers
   }
 })
 
-booksRouter.get("/:bookId", (req, res) => {
-  const books = getBooks()
-  const book = books.find(book => book.id === req.params.bookId)
-  res.send(book)
+booksRouter.get("/", anotherStupidMiddleware, (req, res, next) => {
+  try {
+    // throw new Error("KABOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOM")
+    const booksArray = getBooks()
+    if (req.query && req.query.category) {
+      const filteredBooks = booksArray.filter(book => book.category === req.query.category)
+      res.send(filteredBooks)
+    } else {
+      res.send(booksArray)
+    }
+  } catch (error) {
+    next(error)
+  }
 })
 
-booksRouter.put("/:bookId", (req, res) => {
-  const books = getBooks()
-
-  const index = books.findIndex(book => book.id === req.params.bookId)
-  const oldBook = books[index]
-
-  const updatedBook = { ...oldBook, ...req.body, updatedAt: new Date() }
-
-  books[index] = updatedBook
-
-  writeBooks(books)
-  res.send(updatedBook)
+booksRouter.get("/:bookId", (req, res, next) => {
+  try {
+    const books = getBooks()
+    const book = books.find(book => book.id === req.params.bookId)
+    if (book) {
+      res.send(book)
+    } else {
+      // next(createHttpError(404, `Book with id ${req.params.bookId} not found!`))
+      next(NotFound(`Book with id ${req.params.bookId} not found!`)) // --> err object {status: 404, message: `Book with id ${req.params.bookId} not found!` }
+      // next(BadRequest("message")) // --> err object {status: 400, message: `message` }
+      // next(Unauthorized("message")) // --> err object {status: 401, message: `message`}
+    }
+  } catch (error) {
+    next(error)
+  }
 })
 
-booksRouter.delete("/:bookId", (req, res) => {
-  const books = getBooks()
+booksRouter.put("/:bookId", (req, res, next) => {
+  try {
+    const books = getBooks()
 
-  const remainingBooks = books.filter(book => book.id !== req.params.bookId)
+    const index = books.findIndex(book => book.id === req.params.bookId)
+    if (index !== -1) {
+      const oldBook = books[index]
 
-  writeBooks(remainingBooks)
+      const updatedBook = { ...oldBook, ...req.body, updatedAt: new Date() }
 
-  res.status(204).send()
+      books[index] = updatedBook
+
+      writeBooks(books)
+      res.send(updatedBook)
+    } else {
+      next(NotFound(`Book with id ${req.params.bookId} not found!`))
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
+booksRouter.delete("/:bookId", (req, res, next) => {
+  try {
+    const books = getBooks()
+
+    const remainingBooks = books.filter(book => book.id !== req.params.bookId)
+
+    if (books.length !== remainingBooks.length) {
+      writeBooks(remainingBooks)
+      res.status(204).send()
+    } else {
+      next(NotFound(`Book with id ${req.params.bookId} not found!`))
+    }
+  } catch (error) {
+    next(error)
+  }
 })
 
 export default booksRouter

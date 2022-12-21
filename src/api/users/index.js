@@ -60,9 +60,8 @@ usersRouter.post("/", (req, res) => {
 usersRouter.get("/", (req, res) => {
   // 1. Read the content of users.json file, obtaining an array
   const fileContentAsABuffer = fs.readFileSync(usersJSONPath) // Here you obtain a BUFFER object, which is a MACHINE READABLE FORMAT
-  console.log("file content: ", fileContentAsABuffer)
+
   const usersArray = JSON.parse(fileContentAsABuffer)
-  console.log("file content: ", usersArray)
   // 2. Send it back as a response
   res.send(usersArray)
 })
